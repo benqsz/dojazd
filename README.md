@@ -4,8 +4,8 @@ An open-source public transport app: timetables, live departures, a vehicle map 
 
 ## Install
 
-[<img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" alt="Get it on Obtainium" height="56">](https://apps.obtainium.imranr.dev/redirect.html?r=obtainium://add/https://github.com/benqsz/dojazd)
-[<img src="https://raw.githubusercontent.com/Kunzisoft/Github-badge/main/get-it-on-github.png" alt="Get it on GitHub" height="56">](https://github.com/benqsz/dojazd/releases/latest)
+[<img src=".github/badges/obtainium.png" alt="Get it on Obtainium" height="56">](https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/%7B%22id%22%3A%22benqsz.dojazd%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fbenqsz%2Fdojazd%22%2C%22author%22%3A%22benqsz%22%2C%22name%22%3A%22Dojazd%22%7D)
+[<img src=".github/badges/github.png" alt="Get it on GitHub" height="56">](https://github.com/benqsz/dojazd/releases/latest)
 
 ## Principles
 
