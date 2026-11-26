@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "cities": [
+    {
+      "id": "szczecin",
+      "name": "Szczecin",
+      "operator": "ZDiTM Szczecin",
+      "timezone": "Europe/Warsaw",
+      "center": { "lat": 53.4285, "lon": 14.5528 },
+      "bounds": { "south": 53.2, "west": 14.2, "north": 53.7, "east": 15.2 },
+      "gtfs": {
+        "url": "https://www.zditm.szczecin.pl/storage/gtfs/gtfs.zip"
+      },
+      "realtime": {
+        "tripUpdates": "https://www.zditm.szczecin.pl/storage/gtfs/gtfs-rt-trips.pb",
+        "vehiclePositions": "https://www.zditm.szczecin.pl/storage/gtfs/gtfs-rt-vehicles.pb",
+        "alerts": "https://www.zditm.szczecin.pl/storage/gtfs/gtfs-rt-alerts.pb"
+      },
+      "addresses": {
+        "path": "addresses/szczecin.tsv"
+      },
+      "map": {
+        "path": "maps/szczecin.pmtiles"
+      },
+      "walks": {
+        "path": "walks/szczecin.walk"
+      },
+      "attribution": {
+        "text": "ZDiTM Szczecin",
+        "url": "https://www.zditm.szczecin.pl/en/zditm/for-developers/gtfs",
+        "license": "CC0-1.0",
+        "apiDocs": "https://www.zditm.szczecin.pl/en/zditm/for-developers"
+      }
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+# Text files are kept with LF line endings on every system: the formatting check and the
+# reproducible build both depend on the bytes being the same everywhere.
+* text=auto eol=lf
+
+*.bat text eol=crlf
+
+*.jar binary
+*.pbf binary
+*.png binary
+*.pmtiles binary
+*.walk binary

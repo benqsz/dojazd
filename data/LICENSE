@@ -1,0 +1,13 @@
+The files in addresses/, walks/ and maps/ are databases derived from OpenStreetMap.
+
+  © OpenStreetMap contributors
+  https://www.openstreetmap.org/copyright
+
+They are made available under the Open Database License 1.0:
+
+  https://opendatacommons.org/licenses/odbl/1-0/
+
+The files in maps/ are extracts of the Protomaps basemap (https://protomaps.com/), which is built
+from OpenStreetMap and comes under the same license.
+
+cities.json is part of Dojazd and comes under the license in the root of the repository.

@@ -1,0 +1,12 @@
+{
+  "name": "dojazd-mapstyle",
+  "private": true,
+  "type": "module",
+  "description": "Generates the map styles, fonts and icons that ship with the app",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "dependencies": {
+    "@protomaps/basemaps": "5.7.2"
+  }
+}

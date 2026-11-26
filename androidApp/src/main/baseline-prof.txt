@@ -1,0 +1,5 @@
+# Tells Android to compile the app's own code when it is installed, rather than as it is first run:
+# the libraries bring such a list with them, the app's code had none. Written by hand, for all of it,
+# as the app is small; a list recorded from real use would name less and need a device to make.
+Lapp/dojazd/**;
+HSPLapp/dojazd/**->**(**)**

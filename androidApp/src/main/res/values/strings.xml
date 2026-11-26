@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">Dojazd</string>
+
+    <string name="back">Back</string>
+    <string name="retry">Try again</string>
+    <string name="clear">Clear</string>
+    <string name="settings">Settings</string>
+    <string name="change_city">Change city</string>
+
+    <string name="mode_title">How the app works</string>
+    <string name="mode_online">Online</string>
+    <string name="mode_offline">Offline</string>
+    <string name="mode_online_hint">The timetable is downloaded and kept up to date, with live delays and vehicles.</string>
+    <string name="mode_offline_hint">The app never goes online. You download the timetable file yourself and import it; there is no live data.</string>
+    <string name="city_select_title">Choose a city</string>
+
+    <string name="setup_checking">Checking for timetable…</string>
+    <string name="setup_downloading">Downloading timetable…</string>
+    <string name="setup_download_progress">%1$s of %2$s MB</string>
+    <string name="setup_importing">Preparing timetable…</string>
+    <string name="setup_import_progress">%1$s departures</string>
+    <string name="setup_failed">Could not download the timetable</string>
+
+    <string name="tab_lines">Lines</string>
+
+    <string name="vehicle_tram">Trams</string>
+    <string name="vehicle_bus">Buses</string>
+    <string name="vehicle_rail">Rail</string>
+    <string name="vehicle_metro">Metro</string>
+    <string name="vehicle_ferry">Ferries</string>
+    <string name="vehicle_other">Other</string>
+
+    <string name="search_lines">Search lines</string>
+    <string name="no_lines_found">No lines found</string>
+    <string name="search_stops">Search stops</string>
+    <string name="no_stops_found">No stops found</string>
+    <string name="stop_post">Stand %1$s</string>
+
+    <string name="scheduled_note">Scheduled times</string>
+    <string name="no_departures">No departures</string>
+    <string name="no_departures_that_day">No departures on this day</string>
+    <string name="departs_now">now</string>
+    <string name="departs_in_minutes">in %1$d min</string>
+    <string name="departs_tomorrow">tomorrow</string>
+
+    <string name="day_today">Today</string>
+    <string name="day_tomorrow">Tomorrow</string>
+    <string name="variant_legend">%1$s – runs to: %2$s</string>
+    <string name="all_departures_from_stop">All departures from this stop</string>
+
+    <string name="settings_appearance">Appearance</string>
+    <string name="made_by">Made by %1$s</string>
+    <string name="source_code">Source code</string>
+    <string name="settings_theme_mode">Theme</string>
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="settings_color">Colour</string>
+    <string name="settings_color_system">System colours</string>
+    <string name="settings_high_contrast">High contrast</string>
+    <string name="color_blue">Blue</string>
+    <string name="color_green">Green</string>
+    <string name="color_orange">Orange</string>
+    <string name="color_red">Red</string>
+    <string name="color_purple">Purple</string>
+    <string name="color_teal">Teal</string>
+    <string name="color_pink">Pink</string>
+    <string name="color_yellow">Yellow</string>
+    <string name="color_brown">Brown</string>
+    <string name="color_slate">Slate</string>
+    <string name="color_black">Black</string>
+    <string name="settings_timetable">Timetable</string>
+    <string name="timetable_imported_at">Imported: %1$s</string>
+    <string name="timetable_updating">Updating…</string>
+    <string name="timetable_update_failed">The update failed. %1$s</string>
+    <string name="check_for_update">Refresh now</string>
+    <string name="data_attribution">Data: %1$s (%2$s)</string>
+
+    <string name="cancel">Cancel</string>
+    <string name="download">Download</string>
+    <string name="setup_download_button">Download timetable</string>
+    <string name="download_dialog_title">Download timetable?</string>
+    <string name="download_dialog_text">The timetable will be downloaded and saved on this device.</string>
+    <string name="download_size">Download size: %1$s MB</string>
+    <string name="download_size_checking">Checking download size…</string>
+    <string name="download_size_unknown">The download size could not be checked.</string>
+    <string name="settings_language">Language</string>
+    <string name="language_system">System</string>
+    <string name="settings_refresh">Check for a new timetable</string>
+    <string name="refresh_daily">Daily</string>
+    <string name="refresh_weekly">Weekly</string>
+    <string name="timetable_storage">On this device: %1$s MB</string>
+    <string name="language_polish" translatable="false">Polski</string>
+    <string name="language_english" translatable="false">English</string>
+    <string name="refresh_never">Never</string>
+    <string name="refresh_15_min">15 min</string>
+    <string name="offline_mode">Offline mode</string>
+    <string name="offline_hint">The app never goes online. You download the timetable file yourself and import it; live data is not shown.</string>
+    <string name="offline_setup_title">Offline mode</string>
+    <string name="offline_setup_text">Download the timetable file (GTFS, a ZIP archive) from the address below, for example on a computer or in a browser, and import it here.</string>
+    <string name="offline_settings_text">The timetable is updated only when you import a newer file. It can be downloaded from:</string>
+    <string name="offline_turn_off">Turn offline mode off</string>
+    <string name="timetable_import">Import from a file</string>
+    <string name="timetable_import_failed">The file could not be imported. %1$s</string>
+    <string name="setup_manual_no_data">Automatic refresh is off and the timetable for this city has not been downloaded yet.</string>
+
+    <string name="ok">OK</string>
+    <string name="close">Close</string>
+    <string name="tab_journey">Journey</string>
+    <string name="planner_from">From</string>
+    <string name="planner_to">To</string>
+    <string name="planner_swap">Swap start and destination</string>
+    <string name="planner_now">Now</string>
+    <string name="planner_departure_title">Departure</string>
+    <string name="planner_search">Find journeys</string>
+    <string name="journeys_departure">Departure: %1$s %2$s</string>
+    <string name="journeys_none">No journeys found</string>
+    <string name="duration_minutes">%1$d min</string>
+    <string name="duration_hours">%1$d h %2$d min</string>
+    <string name="journey_on_foot">On foot</string>
+    <plurals name="journey_stops">
+        <item quantity="one">%1$d stop</item>
+        <item quantity="other">%1$d stops</item>
+    </plurals>
+    <string name="journey_get_off">Get off</string>
+    <string name="journey_destination">Destination</string>
+    <string name="live_departs_at">Live: leaves %1$s</string>
+    <string name="journey_show_stops">Show the stops</string>
+    <string name="journey_hide_stops">Hide the stops</string>
+    <string name="journey_wait">Wait for %1$s · %2$d min</string>
+    <string name="journey_leaves_in">Leaves in</string>
+    <string name="journey_leaves">Leaves</string>
+    <string name="journey_departed_label">Left</string>
+    <string name="journey_cancelled_label">Cancelled</string>
+    <string name="stop_with_post">%1$s, stand %2$s</string>
+    <string name="on_request">on request</string>
+    <string name="walk_all_the_way">Walk all the way</string>
+    <string name="walk_to_stop">Walk to %1$s</string>
+    <string name="walk_to_destination">Walk to the destination</string>
+    <string name="walk_change_post">Change to stand %1$s</string>
+    <string name="walk_change_stop">Change at %1$s</string>
+
+    <string name="places_recent">Recent</string>
+    <string name="places_stops">Stops</string>
+    <string name="places_addresses">Addresses and places</string>
+    <string name="search_places">Stop, address or place</string>
+    <string name="no_places_found">Nothing found</string>
+
+    <string name="favourite_place">favourite place</string>
+    <string name="section_saved_places">Favourite places</string>
+    <string name="save_place">Add to favourites</string>
+    <string name="edit_place">Edit favourite place</string>
+    <string name="place_label">Label</string>
+    <string name="place_address">Address</string>
+    <string name="save">Save</string>
+    <string name="delete">Delete</string>
+    <string name="place_saved">Added to favourites</string>
+    <string name="places_show_all">Show all (%1$d)</string>
+    <string name="places_show_fewer">Show fewer</string>
+    <string name="place_change_address">Change</string>
+    <string name="place_add_hint">Search for the place, or pick it on the map, to add it to your favourites.</string>
+    <string name="places_edit">Edit</string>
+    <string name="place_add">Add a favourite place</string>
+    <string name="place_choose_address">Address of the place</string>
+    <string name="places_empty">No favourite places yet. Add one here, or from the search when planning a journey.</string>
+    <string name="storage_internal">Internal storage</string>
+    <string name="places_backup">Backup file</string>
+    <string name="places_backup_hint">Choose where to keep a backup file of your favourite places. Every change is written to it.</string>
+    <string name="places_backup_on">The backup is kept up to date in this file</string>
+    <string name="places_backup_unreachable">The backup cannot be written; your places stay in the app</string>
+    <string name="places_backup_off">Turn off</string>
+    <string name="places_backup_failed">The backup cannot be written to this file</string>
+    <string name="places_export">Export</string>
+    <string name="places_import">Import</string>
+    <string name="places_exported">Favourite places written to the file</string>
+    <string name="places_export_failed">Could not write the file</string>
+    <string name="places_imported">Favourite places imported: %1$d</string>
+    <string name="places_import_failed">Could not read the file</string>
+
+    <string name="show_on_map">Show on map</string>
+    <string name="map_start">Start</string>
+    <string name="map_end">End</string>
+    <string name="map_vehicle_number">Vehicle %1$s</string>
+    <string name="map_vehicle_updated">Position from %1$s</string>
+    <string name="map_failed">The map could not be shown: %1$s</string>
+    <string name="map_attribution" translatable="false">© OpenStreetMap</string>
+
+    <string name="place_icon_plain">Plain</string>
+    <string name="place_icon_home">Home</string>
+    <string name="place_icon_work">Work</string>
+    <string name="place_icon_school">School</string>
+    <string name="place_icon_childcare">Childcare</string>
+    <string name="place_icon_shop">Shop</string>
+    <string name="place_icon_restaurant">Restaurant</string>
+    <string name="place_icon_cafe">Café</string>
+    <string name="place_icon_gym">Gym</string>
+    <string name="place_icon_health">Health</string>
+    <string name="place_icon_park">Park</string>
+    <string name="place_icon_pets">Pets</string>
+    <string name="place_icon_sport">Sport</string>
+    <string name="place_icon_library">Library</string>
+    <string name="place_icon_favourite">Favourite</string>
+    <string name="place_icon_star">Star</string>
+    <string name="pick_on_map">Pick a point on the map</string>
+    <string name="pick_this_point">Use this point</string>
+    <string name="point_on_map">Point on the map</string>
+    <string name="my_location">My location</string>
+    <string name="locating">Finding your location…</string>
+    <string name="location_off">Location is turned off on this phone</string>
+    <string name="location_denied">Dojazd has no access to your location. You can allow it in the app’s settings.</string>
+    <string name="location_unknown">Your location could not be found. Try again, or pick a point on the map.</string>
+    <string name="location_outside_city">You are outside %1$s</string>
+    <string name="planner_recent">Recent journeys</string>
+
+    <string name="live_note">Live</string>
+    <string name="live_unavailable">Scheduled times · no live data</string>
+    <string name="live_on_time">on time</string>
+    <string name="live_late">%1$d min late</string>
+    <string name="live_early">%1$d min early</string>
+    <string name="live_scheduled_at">scheduled %1$s</string>
+    <string name="live_cancelled">cancelled</string>
+    <string name="live_skipped">does not stop here</string>
+    <string name="live_description">Live time</string>
+
+    <string name="alerts">Service alerts</string>
+    <string name="alerts_none">No service alerts</string>
+    <string name="alerts_unavailable">Service alerts could not be loaded</string>
+    <string name="alert_stops">Stops: %1$s</string>
+    <string name="alert_more">More</string>
+    <string name="alert_open">Details on the operator’s website</string>
+
+
+
+    <string name="settings_live_switch">Show live data</string>
+    <string name="settings_live_hint">Delays, vehicles on the map and service alerts. They are fetched from the operator only while a screen shows them.</string>
+
+    <string name="api_docs">Operator’s API documentation</string>
+    <string name="settings_history">History</string>
+    <string name="history_hint">Recent journeys, searches and favourite places are kept on this phone only.</string>
+    <string name="history_journeys">Recent journeys</string>
+    <string name="history_journeys_hint">Listed under the journey planner</string>
+    <string name="history_searches">Recent searches</string>
+    <string name="history_searches_hint">Places chosen lately in the search</string>
+    <string name="history_places">Favourite places</string>
+    <string name="history_places_hint">The backup file, if there is one, is emptied too</string>
+    <string name="history_journeys_confirm">Clear recent journeys?</string>
+    <string name="history_searches_confirm">Clear recent searches?</string>
+    <string name="history_places_confirm">Delete all favourite places?</string>
+    <string name="history_confirm_text">This cannot be undone.</string>
+    <string name="settings_fetch_log">Network log</string>
+    <plurals name="fetch_log_hint">
+        <item quantity="one">The last %1$d request the app made to the network. In offline mode it makes none.</item>
+        <item quantity="other">The last %1$d requests the app made to the network, newest first. In offline mode it makes none.</item>
+    </plurals>
+    <string name="fetch_log_empty">No requests yet</string>
+    <string name="fetch_log_millis" translatable="false">%1$d ms</string>
+    <string name="fetch_log_ok" translatable="false">HTTP %1$d</string>
+    <string name="fetch_log_not_modified">Unchanged</string>
+    <string name="fetch_log_failed">Failed</string>
+    <string name="fetch_kind_timetable">Timetable</string>
+    <string name="fetch_kind_timetable_size">Timetable size</string>
+    <string name="fetch_kind_trip_updates">Live delays</string>
+    <string name="fetch_kind_vehicles">Vehicle positions</string>
+    <string name="fetch_kind_alerts">Service alerts</string>
+    <string name="planner_now_at">Now: %1$s</string>
+    <string name="route_main">Main route</string>
+    <string name="route_all">Whole route</string>
+    <string name="line_direction">Direction</string>
+    <string name="line_change_direction">Change direction</string>
+    <string name="failure_no_connection">No connection to the server. Check the internet connection and try again.</string>
+    <string name="failure_server">The operator’s server answered with an error (%1$d). Try again later.</string>
+    <string name="failure_no_space">There is not enough free space on the phone.</string>
+    <string name="failure_bad_file">This is not a timetable the app can read.</string>
+    <string name="failure_other">Something went wrong. Try again.</string>
+    <string name="history_switch">Keep history</string>
+    <string name="history_switch_hint">Recent journeys and recent searches. Switching this off also clears them.</string>
+    <string name="keyboard_learning_switch">Let the keyboard learn</string>
+    <string name="keyboard_learning_hint">When off, the keyboard is asked not to remember what you type into the app’s search fields.</string>
+    <string name="settings_about">About</string>
+    <string name="about_version">Version %1$s</string>
+    <string name="about_license">Dojazd is free software under the GNU General Public License, version 3. It comes with no warranty.</string>
+    <string name="about_license_link">Text of the license</string>
+    <string name="about_privacy_link">Privacy policy</string>
+    <string name="about_third_party">Uses the work of others</string>
+    <string name="timetable_expired">This timetable ended on %1$s. Update it in the settings to see departures.</string>
+</resources>

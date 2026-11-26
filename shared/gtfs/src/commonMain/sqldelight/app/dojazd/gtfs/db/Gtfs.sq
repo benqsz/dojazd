@@ -1,0 +1,259 @@
+-- A disposable, read-optimised copy of one city's GTFS feed. It is never
+-- migrated: when this schema changes, bump Timetable.DB_FORMAT and the app
+-- re-imports the feed into a fresh file.
+--
+-- Text ids from the feed are replaced by small integers assigned in import
+-- order, which keeps stop_time (by far the largest table) compact.
+
+CREATE TABLE route (
+  id INTEGER NOT NULL PRIMARY KEY,
+  gtfs_id TEXT NOT NULL,
+  short_name TEXT NOT NULL,
+  long_name TEXT NOT NULL,
+  description TEXT NOT NULL,
+  type INTEGER NOT NULL,
+  color INTEGER,
+  text_color INTEGER
+);
+
+CREATE TABLE stop (
+  id INTEGER NOT NULL PRIMARY KEY,
+  gtfs_id TEXT NOT NULL,
+  code TEXT NOT NULL,
+  name TEXT NOT NULL,
+  platform TEXT NOT NULL,
+  lat REAL NOT NULL,
+  lon REAL NOT NULL
+);
+
+CREATE TABLE service (
+  id INTEGER NOT NULL PRIMARY KEY,
+  gtfs_id TEXT NOT NULL,
+  -- Bit 0 is Monday, bit 6 is Sunday.
+  weekdays INTEGER NOT NULL,
+  -- Dates are stored as YYYYMMDD integers.
+  start_date INTEGER NOT NULL,
+  end_date INTEGER NOT NULL
+);
+
+CREATE TABLE service_exception (
+  service INTEGER NOT NULL,
+  date INTEGER NOT NULL,
+  added INTEGER NOT NULL,
+  PRIMARY KEY (service, date)
+) WITHOUT ROWID;
+
+-- A pattern is a distinct sequence of stops served by a route in one direction.
+CREATE TABLE pattern (
+  id INTEGER NOT NULL PRIMARY KEY,
+  route INTEGER NOT NULL,
+  direction INTEGER NOT NULL,
+  headsign TEXT NOT NULL,
+  trip_count INTEGER NOT NULL
+);
+
+CREATE INDEX pattern_route ON pattern(route);
+
+CREATE TABLE pattern_stop (
+  pattern INTEGER NOT NULL,
+  seq INTEGER NOT NULL,
+  stop INTEGER NOT NULL,
+  PRIMARY KEY (pattern, seq)
+) WITHOUT ROWID;
+
+CREATE TABLE trip (
+  id INTEGER NOT NULL PRIMARY KEY,
+  -- trip_id of the feed, which live data refers to.
+  gtfs_id TEXT NOT NULL,
+  route INTEGER NOT NULL,
+  service INTEGER NOT NULL,
+  pattern INTEGER NOT NULL,
+  headsign TEXT NOT NULL,
+  -- GTFS wheelchair_accessible: 0 unknown, 1 accessible, 2 not accessible.
+  wheelchair INTEGER NOT NULL,
+  -- The path the vehicle follows, when the feed describes it.
+  shape INTEGER
+);
+
+-- The path of a trip along streets or tracks, from shapes.txt. Its points, in travel order, are packed
+-- eight bytes each: latitude then longitude, as 32-bit integers of millionths of a degree, low byte first.
+CREATE TABLE shape (
+  id INTEGER NOT NULL PRIMARY KEY,
+  points BLOB NOT NULL
+);
+
+CREATE TABLE stop_time (
+  trip INTEGER NOT NULL,
+  seq INTEGER NOT NULL,
+  stop INTEGER NOT NULL,
+  -- Seconds since the start of the service day; may exceed 86400.
+  arrival INTEGER NOT NULL,
+  departure INTEGER NOT NULL,
+  -- GTFS pickup_type: 0 regular, 1 no boarding, 2 phone agency, 3 on request.
+  pickup INTEGER NOT NULL,
+  -- GTFS drop_off_type, with the same values.
+  drop_off INTEGER NOT NULL,
+  -- 1 for the final stop of the trip, which is not a departure.
+  last INTEGER NOT NULL,
+  PRIMARY KEY (trip, seq)
+) WITHOUT ROWID;
+
+-- Holds every column the departure queries filter on, so they are answered from the index alone.
+CREATE INDEX stop_time_stop ON stop_time(stop, departure, pickup, last);
+
+-- Stop-to-stop rows of transfers.txt; rows limited to particular routes or trips are not imported.
+CREATE TABLE transfer (
+  from_stop INTEGER NOT NULL,
+  to_stop INTEGER NOT NULL,
+  -- 0 when the feed says the transfer cannot be made.
+  possible INTEGER NOT NULL,
+  -- Minimum time to change, in seconds; NULL when the feed gives none.
+  seconds INTEGER,
+  PRIMARY KEY (from_stop, to_stop)
+) WITHOUT ROWID;
+
+CREATE TABLE meta (
+  key TEXT NOT NULL PRIMARY KEY,
+  value TEXT NOT NULL
+);
+
+insertRoute:
+INSERT INTO route VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+insertStop:
+INSERT INTO stop VALUES (?, ?, ?, ?, ?, ?, ?);
+
+insertService:
+INSERT INTO service VALUES (?, ?, ?, ?, ?);
+
+insertServiceException:
+INSERT OR REPLACE INTO service_exception VALUES (?, ?, ?);
+
+insertPattern:
+INSERT INTO pattern VALUES (?, ?, ?, ?, ?);
+
+insertPatternStop:
+INSERT INTO pattern_stop VALUES (?, ?, ?);
+
+insertTrip:
+INSERT INTO trip VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+insertShape:
+INSERT INTO shape VALUES (?, ?);
+
+selectShape:
+SELECT points FROM shape WHERE id = ?;
+
+insertStopTime:
+INSERT INTO stop_time VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+insertTransfer:
+INSERT OR REPLACE INTO transfer VALUES (?, ?, ?, ?);
+
+upsertMeta:
+INSERT OR REPLACE INTO meta VALUES (?, ?);
+
+selectMeta:
+SELECT value FROM meta WHERE key = ?;
+
+selectRoutes:
+SELECT * FROM route ORDER BY id;
+
+selectStops:
+SELECT * FROM stop ORDER BY id;
+
+selectServices:
+SELECT * FROM service;
+
+selectServiceExceptions:
+SELECT * FROM service_exception;
+
+selectPatterns:
+SELECT * FROM pattern WHERE route = ? ORDER BY direction, trip_count DESC, id;
+
+selectPatternStops:
+SELECT stop FROM pattern_stop WHERE pattern = ? ORDER BY seq;
+
+-- The path of the runs of each pattern of a route, when the feed describes one: read in one pass over the trips.
+selectPatternShapes:
+SELECT pattern, MIN(shape) AS shape FROM trip WHERE route = ? AND shape IS NOT NULL GROUP BY pattern;
+
+-- Which kinds of vehicle call at each stop.
+selectStopRouteTypes:
+SELECT DISTINCT pattern_stop.stop, route.type
+FROM pattern_stop
+JOIN pattern ON pattern.id = pattern_stop.pattern
+JOIN route ON route.id = pattern.route;
+
+-- Looked up stop by stop through the stop_time_stop index, rather than by reading every stop time.
+selectBoardingStops:
+SELECT id FROM stop
+WHERE EXISTS (
+  SELECT 1 FROM stop_time
+  WHERE stop_time.stop = stop.id AND stop_time.pickup != 1 AND stop_time.last = 0
+);
+
+countStopTimes:
+SELECT COUNT(*) FROM stop_time;
+
+selectDepartures:
+SELECT stop_time.departure, stop_time.pickup, stop_time.stop, stop_time.seq, trip.route, trip.headsign, trip.wheelchair,
+  trip.gtfs_id
+FROM stop_time
+JOIN trip ON trip.id = stop_time.trip
+WHERE stop_time.stop IN :stops
+  AND trip.service IN :services
+  AND stop_time.departure >= :fromSeconds
+  AND stop_time.pickup != 1
+  AND stop_time.last = 0
+ORDER BY stop_time.departure
+LIMIT :limit;
+
+selectRouteDeparturesAtStop:
+SELECT stop_time.departure, stop_time.pickup, stop_time.stop, stop_time.seq, trip.route, trip.headsign, trip.wheelchair,
+  trip.gtfs_id
+FROM stop_time
+JOIN trip ON trip.id = stop_time.trip
+WHERE stop_time.stop = :stop
+  AND trip.route = :route
+  AND trip.service IN :services
+  AND stop_time.pickup != 1
+  AND stop_time.last = 0
+ORDER BY stop_time.departure;
+
+selectAllPatterns:
+SELECT id, route FROM pattern ORDER BY id;
+
+selectAllPatternStops:
+SELECT pattern, stop FROM pattern_stop ORDER BY pattern, seq;
+
+selectTripsOfServices:
+SELECT id, pattern, headsign, shape, gtfs_id FROM trip WHERE service IN :services;
+
+-- Grouped by trip, each trip's stops in travel order.
+selectStopTimesOfServices:
+SELECT stop_time.trip, stop_time.arrival, stop_time.departure, stop_time.pickup, stop_time.drop_off, stop_time.seq
+FROM stop_time
+JOIN trip ON trip.id = stop_time.trip
+WHERE trip.service IN :services
+ORDER BY stop_time.trip, stop_time.seq;
+
+-- The same, of only the trips still on their way after :after seconds: those of the day before that run past midnight.
+selectStopTimesOfServicesEndingAfter:
+SELECT stop_time.trip, stop_time.arrival, stop_time.departure, stop_time.pickup, stop_time.drop_off, stop_time.seq
+FROM stop_time
+JOIN trip ON trip.id = stop_time.trip
+WHERE trip.service IN :services
+  AND stop_time.trip IN (SELECT ended.trip FROM stop_time AS ended WHERE ended.last = 1 AND ended.arrival > :after)
+ORDER BY stop_time.trip, stop_time.seq;
+
+-- The last day any service runs by its weekly rule, as YYYYMMDD.
+selectLastServiceDate:
+SELECT MAX(end_date) FROM service;
+
+-- The last day a service is added for by exception, as YYYYMMDD.
+selectLastAddedDate:
+SELECT MAX(date) FROM service_exception WHERE added = 1;
+
+selectTransfers:
+SELECT * FROM transfer;

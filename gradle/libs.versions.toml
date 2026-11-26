@@ -1,0 +1,40 @@
+[versions]
+agp = "9.5.2"
+kotlin = "2.4.21"
+kotlinxSerialization = "1.13.0"
+kotlinxDatetime = "0.8.0"
+kotlinxCoroutines = "1.11.0"
+sqldelight = "2.4.1"
+androidxActivity = "1.13.0"
+androidxLifecycle = "2.11.1"
+composeBom = "2026.11.01"
+materialKolor = "5.0.1"
+maplibre = "13.7.1"
+profileinstaller = "1.4.1"
+spotless = "8.9.0"
+ktlint = "1.8.0"
+composeRules = "0.6.8"
+
+[libraries]
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }
+kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinxCoroutines" }
+sqldelight-driver-jvm = { module = "app.cash.sqldelight:sqlite-driver", version.ref = "sqldelight" }
+sqldelight-driver-android = { module = "app.cash.sqldelight:android-driver", version.ref = "sqldelight" }
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidxActivity" }
+androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidxLifecycle" }
+androidx-compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }
+androidx-compose-material3 = { module = "androidx.compose.material3:material3" }
+androidx-compose-ui = { module = "androidx.compose.ui:ui" }
+androidx-profileinstaller = { module = "androidx.profileinstaller:profileinstaller", version.ref = "profileinstaller" }
+materialkolor = { module = "com.materialkolor:material-kolor", version.ref = "materialKolor" }
+# The OpenGL ES build: unlike the default Vulkan one it runs on every device and emulator the app supports.
+maplibre = { module = "org.maplibre.gl:android-sdk-opengl", version.ref = "maplibre" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+sqldelight = { id = "app.cash.sqldelight", version.ref = "sqldelight" }
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }

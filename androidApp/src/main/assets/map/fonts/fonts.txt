@@ -1,0 +1,4 @@
+NotoSans-Regular
+NotoSans-Medium
+NotoSans-Italic
+NotoSansDevanagari-Regular
