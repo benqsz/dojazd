@@ -41,6 +41,13 @@ gradlew :androidApp:installDebug       # install on a connected device or emulat
 gradlew :androidApp:installOptimized   # the release build signed with the debug key
 ```
 
+## Signing certificate
+
+```text
+benqsz.dojazd
+AF:2C:D6:19:00:9F:7B:9E:E9:F9:9D:88:60:2F:76:FD:8C:F8:BD:F5:1F:ED:CA:56:D1:8F:3E:11:A6:FE:07:82
+```
+
 ## License
 
 Copyright (C) 2026 benqsz

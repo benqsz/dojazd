@@ -27,7 +27,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "app.dojazd"
+        applicationId = "benqsz.dojazd"
         minSdk = 26
         targetSdk = 37
         versionCode = versionCodeOf(appVersionName)
