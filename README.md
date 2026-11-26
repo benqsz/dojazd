@@ -1,6 +1,6 @@
 # dojazd
 
-An open-source public transport app: timetables, live departures, a vehicle map and a journey planner.
+Open-source Polish public transport app: timetables, live departures, a vehicle map and a journey planner.
 
 ## Install
 
