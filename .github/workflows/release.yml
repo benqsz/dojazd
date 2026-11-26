@@ -21,6 +21,9 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: read
+    outputs:
+      jdk: ${{ steps.toolchain.outputs.jdk }}
+      gradle: ${{ steps.toolchain.outputs.gradle }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -37,6 +40,12 @@ jobs:
 
       - name: Build
         run: ./gradlew --no-build-cache build :androidApp:assembleRelease -PappVersionName="${TAG#v}"
+
+      - name: Record toolchain
+        id: toolchain
+        run: |
+          echo "jdk=$(java -version 2>&1 | sed -n 2p)" >> "$GITHUB_OUTPUT"
+          echo "gradle=$(./gradlew --version | sed -n 's/^Gradle //p')" >> "$GITHUB_OUTPUT"
 
       - name: Upload unsigned
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -86,14 +95,80 @@ jobs:
 
   publish_release:
     name: Publish Release
-    needs: sign
+    needs: [build_unsigned, sign]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          path: source
+
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: signed
+
+      - name: Write release notes
+        env:
+          JDK: ${{ needs.build_unsigned.outputs.jdk }}
+          GRADLE: ${{ needs.build_unsigned.outputs.gradle }}
+        run: |
+          version="${TAG#v}"
+          apk="dojazd-$version.apk"
+          repo_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
+
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "build-tools;36.0.0" > /dev/null
+          digest="$("$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs "$apk" \
+            | sed -n 's/^.*certificate SHA-256 digest: \([0-9a-f]\{64\}\)$/\1/p' | head -n 1)"
+          if [ -z "$digest" ]; then
+            echo "::error::Could not read the signing certificate of $apk."
+            exit 1
+          fi
+          fingerprint="$(echo "$digest" | tr 'a-f' 'A-F' | sed 's/../&:/g; s/:$//')"
+          package="$("$ANDROID_HOME/build-tools/36.0.0/aapt2" dump packagename "$apk")"
+
+          previous="$(git -C source describe --tags --abbrev=0 --match 'v[0-9]*' "$TAG^" 2> /dev/null || true)"
+          if [ -n "$previous" ]; then
+            range="$previous..$TAG"
+            changelog="$repo_url/compare/$previous...$TAG"
+          else
+            range="$TAG"
+            changelog="$repo_url/commits/$TAG"
+          fi
+
+          {
+            echo "## Changes"
+            echo
+            git -C source log --no-merges --format='- %s (%h)' "$range"
+            echo
+            echo "**Full Changelog**: $changelog"
+            echo
+            echo "## Signing certificate"
+            echo
+            echo '```text'
+            echo "$package"
+            echo "$fingerprint"
+            echo '```'
+            echo
+            echo "## Reproducible build"
+            echo
+            echo "This APK can be rebuilt from source: the published APK is that build plus a signature. Built with:"
+            echo
+            echo "- JDK: $JDK"
+            echo "- Gradle: $GRADLE"
+            echo
+            echo "Requirements: JDK 25, the Android SDK and [apksigcopier](https://github.com/obfusk/apksigcopier)."
+            echo
+            echo '```sh'
+            echo "git clone --branch $TAG $repo_url.git dojazd && cd dojazd"
+            echo "curl -LO $repo_url/releases/download/$TAG/$apk"
+            echo "./gradlew --no-build-cache :androidApp:assembleRelease -PappVersionName=$version"
+            echo "apksigcopier compare $apk --unsigned androidApp/build/outputs/apk/release/androidApp-release-unsigned.apk"
+            echo '```'
+          } > notes.md
+          cat notes.md
 
       - name: Create release
         env:
@@ -102,6 +177,9 @@ jobs:
         run: |
           if gh release view "$TAG" > /dev/null 2>&1; then
             gh release upload "$TAG" dojazd-*.apk --clobber
+            if [ -z "$(gh release view "$TAG" --json body --jq .body)" ]; then
+              gh release edit "$TAG" --notes-file notes.md
+            fi
           else
-            gh release create "$TAG" dojazd-*.apk --verify-tag --title "$TAG" --generate-notes
+            gh release create "$TAG" dojazd-*.apk --verify-tag --title "$TAG" --notes-file notes.md
           fi
