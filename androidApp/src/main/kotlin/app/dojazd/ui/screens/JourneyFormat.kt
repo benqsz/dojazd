@@ -5,6 +5,7 @@ import androidx.compose.ui.res.stringResource
 import app.dojazd.R
 import app.dojazd.gtfs.GtfsTime
 import app.dojazd.routing.Leg
+import app.dojazd.routing.WalkEstimate
 
 internal const val DAY_SECONDS = 86_400
 
@@ -27,3 +28,9 @@ internal fun duration(
 }
 
 internal fun walkMinutes(walk: Leg.Walk) = ((walk.arrival - walk.departure + 59) / 60).coerceAtLeast(1)
+
+/** About how far a walk is, from the time it takes at walking pace, to the nearest ten metres. */
+internal fun walkMeters(walk: Leg.Walk): Int {
+    val meters = (walk.arrival - walk.departure) * WalkEstimate.SPEED_METERS_PER_SECOND
+    return ((meters / 10).toInt() * 10).coerceAtLeast(10)
+}

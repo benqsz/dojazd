@@ -119,23 +119,19 @@
         <item quantity="many">%1$d przystanków</item>
         <item quantity="other">%1$d przystanku</item>
     </plurals>
-    <string name="journey_get_off">Wysiadka</string>
-    <string name="journey_destination">Cel</string>
-    <string name="live_departs_at">Na żywo: odjazd %1$s</string>
     <string name="journey_show_stops">Pokaż przystanki</string>
     <string name="journey_hide_stops">Ukryj przystanki</string>
-    <string name="journey_wait">Czekaj na %1$s · %2$d min</string>
+    <string name="journey_wait">Czekaj na przesiadkę</string>
     <string name="journey_leaves_in">Odjazd za</string>
     <string name="journey_leaves">Odjazd</string>
+    <string name="journey_set_off">Wyjdź %1$s</string>
+    <string name="journey_set_off_in">Wyjdź za %1$s</string>
+    <string name="journey_set_off_at">Wyjdź o %1$s</string>
     <string name="journey_departed_label">Odjechał</string>
     <string name="journey_cancelled_label">Odwołany</string>
-    <string name="stop_with_post">%1$s, słupek %2$s</string>
-    <string name="on_request">na żądanie</string>
-    <string name="walk_all_the_way">Pieszo całą trasę</string>
-    <string name="walk_to_stop">Dojście na przystanek %1$s</string>
-    <string name="walk_to_destination">Dojście do celu</string>
-    <string name="walk_change_post">Przejście na słupek %1$s</string>
-    <string name="walk_change_stop">Przejście na przystanek %1$s</string>
+    <string name="on_request_short">NŻ</string>
+    <string name="on_request">Na żądanie</string>
+    <string name="walk_distance">Pieszo %1$d m</string>
 
     <string name="places_recent">Ostatnie</string>
     <string name="places_stops">Przystanki</string>

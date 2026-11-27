@@ -218,21 +218,34 @@ fun FullScreenDialog(
     title: @Composable () -> Unit,
     onDismiss: () -> Unit,
     onClose: () -> Unit = onDismiss,
+    /** Lets [title] take as many lines as it needs, where the standard bar would cut it short. */
+    wrapTitle: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    val close: @Composable () -> Unit = {
+        IconButton(onClick = onClose) {
+            Icon(painterResource(R.drawable.ic_close), contentDescription = stringResource(R.string.close))
+        }
+    }
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Surface(Modifier.fillMaxSize()) {
             Column {
-                TopAppBar(
-                    title = title,
-                    navigationIcon = {
-                        IconButton(onClick = onClose) {
-                            Icon(painterResource(R.drawable.ic_close), contentDescription = stringResource(R.string.close))
-                        }
-                    },
-                    // The dialog window is already laid out inside the system bars.
-                    windowInsets = WindowInsets(0, 0, 0, 0),
-                )
+                // The dialog window is already laid out inside the system bars.
+                if (wrapTitle) {
+                    Row(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = TOP_BAR_HEIGHT)
+                                .padding(horizontal = Spacing.extraSmall, vertical = Spacing.small),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        close()
+                        Box(Modifier.weight(1f).padding(start = Spacing.extraSmall, end = Spacing.medium)) { title() }
+                    }
+                } else {
+                    TopAppBar(title = title, navigationIcon = close, windowInsets = WindowInsets(0, 0, 0, 0))
+                }
                 content()
             }
         }
@@ -387,6 +400,40 @@ fun <T> rememberTimetableQuery(
         value = repository.query(block)
     }
 }
+
+/**
+ * Where a journey starts and where it ends, each on a line of its own and never
+ * cut short, however long the names: a circle before the start, a pin before the end.
+ */
+@Composable
+fun RouteEnds(
+    from: String,
+    to: String,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(Spacing.tiny)) {
+        RouteEnd(R.drawable.ic_trip_origin, from)
+        RouteEnd(R.drawable.ic_location_on, to)
+    }
+}
+
+@Composable
+private fun RouteEnd(
+    icon: Int,
+    name: String,
+) {
+    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
+        Icon(
+            painterResource(icon),
+            contentDescription = null,
+            modifier = Modifier.padding(top = Spacing.tiny).size(ROUTE_END_ICON),
+            tint = MaterialTheme.colorScheme.primary,
+        )
+        Text(name, style = MaterialTheme.typography.titleMedium)
+    }
+}
+
+val ROUTE_END_ICON = IconSize.small
 
 /**
  * "From → to" for a journey. The arrow is drawn as an icon centred on the

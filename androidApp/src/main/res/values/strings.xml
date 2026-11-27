@@ -121,23 +121,19 @@
         <item quantity="one">%1$d stop</item>
         <item quantity="other">%1$d stops</item>
     </plurals>
-    <string name="journey_get_off">Get off</string>
-    <string name="journey_destination">Destination</string>
-    <string name="live_departs_at">Live: leaves %1$s</string>
     <string name="journey_show_stops">Show the stops</string>
     <string name="journey_hide_stops">Hide the stops</string>
-    <string name="journey_wait">Wait for %1$s · %2$d min</string>
+    <string name="journey_wait">Wait for the connection</string>
     <string name="journey_leaves_in">Leaves in</string>
     <string name="journey_leaves">Leaves</string>
+    <string name="journey_set_off">Set off %1$s</string>
+    <string name="journey_set_off_in">Set off in %1$s</string>
+    <string name="journey_set_off_at">Set off at %1$s</string>
     <string name="journey_departed_label">Left</string>
     <string name="journey_cancelled_label">Cancelled</string>
-    <string name="stop_with_post">%1$s, stand %2$s</string>
-    <string name="on_request">on request</string>
-    <string name="walk_all_the_way">Walk all the way</string>
-    <string name="walk_to_stop">Walk to %1$s</string>
-    <string name="walk_to_destination">Walk to the destination</string>
-    <string name="walk_change_post">Change to stand %1$s</string>
-    <string name="walk_change_stop">Change at %1$s</string>
+    <string name="on_request_short">ON</string>
+    <string name="on_request">On request</string>
+    <string name="walk_distance">Walk %1$d m</string>
 
     <string name="places_recent">Recent</string>
     <string name="places_stops">Stops</string>

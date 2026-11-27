@@ -71,8 +71,9 @@ import app.dojazd.ui.FullScreenDialog
 import app.dojazd.ui.LoadingBox
 import app.dojazd.ui.MessageBox
 import app.dojazd.ui.PlanPoint
-import app.dojazd.ui.RouteText
+import app.dojazd.ui.RouteEnds
 import app.dojazd.ui.Screen
+import app.dojazd.ui.SectionHeader
 import app.dojazd.ui.WrappingTopBar
 import app.dojazd.ui.expiredTimetableNote
 import app.dojazd.ui.map.JourneyMap
@@ -205,24 +206,22 @@ fun JourneysScreen(
         }
     }
 
+    val departure =
+        stringResource(
+            R.string.journeys_departure,
+            dayLabel(date, LocalMoment.now(city.timezone).date.daysUntil(date)),
+            GtfsTime.format(startSeconds),
+        )
     Scaffold(
-        topBar = {
-            JourneysHeader(
-                from = request.from.name,
-                to = request.to.name,
-                departure =
-                    stringResource(
-                        R.string.journeys_departure,
-                        dayLabel(date, LocalMoment.now(city.timezone).date.daysUntil(date)),
-                        GtfsTime.format(startSeconds),
-                    ),
-                onBack = onBack,
-            )
-        },
+        topBar = { JourneysHeader(from = request.from.name, to = request.to.name, onBack = onBack) },
     ) { padding ->
         val current = search.results
         if (current == null) {
-            LoadingBox(Modifier.padding(padding))
+            // What was searched for is said while it is being looked up, not only once it is found.
+            Column(Modifier.fillMaxSize().padding(padding)) {
+                SectionHeader(departure, Modifier.padding(horizontal = Spacing.large, vertical = Spacing.small))
+                LoadingBox()
+            }
             return@Scaffold
         }
 
@@ -299,58 +298,61 @@ fun JourneysScreen(
         val listTop = { if (pulling) pulled else resting.value }
         val indicatorSpace = with(LocalDensity.current) { (INDICATOR_SIZE + Spacing.small).toPx() }
 
-        Box(
-            Modifier
-                .fillMaxSize()
-                .padding(padding)
-                // The circle comes out from behind the top edge rather than over the bar above.
-                .clipToBounds(),
-        ) {
-            // In the gap the pulled list leaves, just above the first journey and never on it:
-            // filling up while pulling, turning while loading.
-            val indicator =
+        Column(Modifier.fillMaxSize().padding(padding)) {
+            SectionHeader(departure, Modifier.padding(horizontal = Spacing.large, vertical = Spacing.small))
+            Box(
                 Modifier
-                    .align(Alignment.TopCenter)
-                    .offset { IntOffset(0, (listTop() - indicatorSpace).roundToInt()) }
-                    .size(INDICATOR_SIZE)
-            when {
-                loadingEarlier -> CircularProgressIndicator(indicator)
-                pulling && pulled > 0f -> CircularProgressIndicator(progress = { (pulled / threshold).coerceIn(0f, 1f) }, indicator)
-            }
-            LazyColumn(
-                state = listState,
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .nestedScroll(pastTop)
-                        .offset { IntOffset(0, listTop().roundToInt()) },
-                contentPadding = PaddingValues(horizontal = Spacing.large, vertical = Spacing.small),
-                verticalArrangement = Arrangement.spacedBy(Spacing.medium),
+                    .fillMaxSize()
+                    // The circle comes out from behind the top edge rather than over the header above.
+                    .clipToBounds(),
             ) {
-                if (current.journeys.isEmpty()) {
-                    item { MessageBox(expired ?: stringResource(R.string.journeys_none), Modifier.fillParentMaxHeight(0.5f)) }
+                // In the gap the pulled list leaves, just above the first journey and never on it:
+                // filling up while pulling, turning while loading.
+                val indicator =
+                    Modifier
+                        .align(Alignment.TopCenter)
+                        .offset { IntOffset(0, (listTop() - indicatorSpace).roundToInt()) }
+                        .size(INDICATOR_SIZE)
+                when {
+                    loadingEarlier -> CircularProgressIndicator(indicator)
+                    pulling && pulled > 0f -> CircularProgressIndicator(progress = { (pulled / threshold).coerceIn(0f, 1f) }, indicator)
                 }
-                items(current.journeys, key = ::journeyKey) { journey ->
-                    val key = journeyKey(journey)
-                    // Gone when the first vehicle has left, by live data where there is any.
-                    val departed =
-                        (journey.legs.firstOrNull { it is Leg.Ride } as Leg.Ride?)?.let { ride ->
-                            val delay = (predict(ride) as? Prediction.Delay)?.seconds ?: 0
-                            ride.departure + delay < nowSeconds
-                        } ?: false
-                    JourneyCard(
-                        journey = journey,
-                        departed = departed,
-                        nowSeconds = nowSeconds,
-                        predict = ::predict,
-                        expanded = key == expanded,
-                        onClick = { expanded = if (key == expanded) null else key },
-                        onShowMap = if (map != null) ({ onMap = journey }) else null,
-                    )
-                }
-                // When walking is the only answer, later vehicles would all be slower than it: there is nothing to load.
-                if (current.searchedUntil != null && (current.rides.isNotEmpty() || current.walk == null)) {
-                    item(key = LOADING_LATER) { LoadingRow() }
+                LazyColumn(
+                    state = listState,
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .nestedScroll(pastTop)
+                            .offset { IntOffset(0, listTop().roundToInt()) },
+                    contentPadding = PaddingValues(horizontal = Spacing.large, vertical = Spacing.small),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.medium),
+                ) {
+                    if (current.journeys.isEmpty()) {
+                        item { MessageBox(expired ?: stringResource(R.string.journeys_none), Modifier.fillParentMaxHeight(0.5f)) }
+                    }
+                    items(current.journeys, key = ::journeyKey) { journey ->
+                        val key = journeyKey(journey)
+                        // Gone when the first vehicle has left, by live data where there is any.
+                        val departed =
+                            (journey.legs.firstOrNull { it is Leg.Ride } as Leg.Ride?)?.let { ride ->
+                                val delay = (predict(ride) as? Prediction.Delay)?.seconds ?: 0
+                                ride.departure + delay < nowSeconds
+                            } ?: false
+                        JourneyCard(
+                            journey = journey,
+                            destination = request.to.name,
+                            departed = departed,
+                            nowSeconds = nowSeconds,
+                            predict = ::predict,
+                            expanded = key == expanded,
+                            onClick = { expanded = if (key == expanded) null else key },
+                            onShowMap = if (map != null) ({ onMap = journey }) else null,
+                        )
+                    }
+                    // When walking is the only answer, later vehicles would all be slower than it: there is nothing to load.
+                    if (current.searchedUntil != null && (current.rides.isNotEmpty() || current.walk == null)) {
+                        item(key = LOADING_LATER) { LoadingRow() }
+                    }
                 }
             }
         }
@@ -480,46 +482,16 @@ private fun ShownOnMap(
 
 /**
  * The bar over the journeys: where from and where to, each on a line of its own
- * and never cut short, however long the names, and when the search starts.
+ * and never cut short, however long the names.
  */
 @Composable
 private fun JourneysHeader(
     from: String,
     to: String,
-    departure: String,
     onBack: () -> Unit,
 ) {
-    WrappingTopBar(onBack) {
-        Column(verticalArrangement = Arrangement.spacedBy(Spacing.tiny)) {
-            HeaderEnd(R.drawable.ic_trip_origin, from)
-            HeaderEnd(R.drawable.ic_location_on, to)
-            Text(
-                departure,
-                modifier = Modifier.padding(start = HEADER_ICON + Spacing.small),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
+    WrappingTopBar(onBack) { RouteEnds(from, to) }
 }
-
-@Composable
-private fun HeaderEnd(
-    icon: Int,
-    name: String,
-) {
-    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
-        Icon(
-            painterResource(icon),
-            contentDescription = null,
-            modifier = Modifier.padding(top = Spacing.tiny).size(HEADER_ICON),
-            tint = MaterialTheme.colorScheme.primary,
-        )
-        Text(name, style = MaterialTheme.typography.titleMedium)
-    }
-}
-
-private val HEADER_ICON = IconSize.small
 
 /** Lets a loading circle show for a moment at least, even when the search is quick, so that it reads as loading. */
 internal suspend fun waitAtLeast(started: Long) {
@@ -574,7 +546,7 @@ private fun JourneyMapDialog(
     timezone: String,
     onDismiss: () -> Unit,
 ) {
-    FullScreenDialog(title = { RouteText(from, to) }, onDismiss = onDismiss) {
+    FullScreenDialog(title = { RouteEnds(from, to) }, onDismiss = onDismiss, wrapTitle = true) {
         JourneyMap(map, journey, origin, destination, from, to, walks, shapes, vehicles, timezone, Modifier.fillMaxSize())
     }
 }
