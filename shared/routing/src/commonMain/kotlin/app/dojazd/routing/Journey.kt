@@ -54,4 +54,6 @@ sealed interface Leg {
 data class Call(
     val stop: Stop,
     val time: Int,
+    /** True when the vehicle stops here only if asked to, by a passenger getting on or one getting off. */
+    val onRequest: Boolean = false,
 )

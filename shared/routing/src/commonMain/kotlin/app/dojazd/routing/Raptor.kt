@@ -289,6 +289,9 @@ internal class Raptor(
                                     } else {
                                         route.departure(trip, position)
                                     },
+                                onRequest =
+                                    route.pickups[trip * width + position] == StopService.ON_REQUEST ||
+                                        route.dropOffs[trip * width + position] == StopService.ON_REQUEST,
                             )
                         },
                     boardOnRequest = route.pickups[trip * width + boardPosition] == StopService.ON_REQUEST,
