@@ -45,6 +45,7 @@ import app.dojazd.routing.WalkNetwork
 import app.dojazd.ui.ArgbColors
 import app.dojazd.ui.Colors
 import app.dojazd.ui.LoadingBox
+import app.dojazd.ui.liveColor
 import app.dojazd.ui.rememberLineColorsArgb
 import app.dojazd.ui.theme.LocalDarkTheme
 import app.dojazd.ui.theme.Spacing
@@ -280,7 +281,7 @@ fun JourneyMap(
     val walkColor = MaterialTheme.colorScheme.onSurface.toArgb()
     val endColor = markerColor().toArgb()
     val labelColors = Colors(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.onSurface).toArgb()
-    val liveColor = MaterialTheme.colorScheme.tertiary.toArgb()
+    val liveColor = liveColor().toArgb()
     val resources = LocalResources.current
     val markers = remember(resources) { MapMarkers(resources) }
     val names =

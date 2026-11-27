@@ -68,7 +68,8 @@ class AppSettings(
                         .getString(KEY_THEME_MODE, null)
                         ?.let { saved -> ThemeMode.entries.firstOrNull { it.name == saved } }
                         ?: ThemeMode.SYSTEM,
-                seedColor = if (prefs.contains(KEY_SEED_COLOR)) prefs.getInt(KEY_SEED_COLOR, 0) else null,
+                // The red and pink themes are no longer offered; whoever had chosen one is back on the default colours.
+                seedColor = if (prefs.contains(KEY_SEED_COLOR)) prefs.getInt(KEY_SEED_COLOR, 0).takeIf { it !in REMOVED_SEEDS } else null,
                 highContrast = prefs.getBoolean(KEY_HIGH_CONTRAST, false),
             ),
         )
@@ -140,6 +141,8 @@ class AppSettings(
         const val KEY_CITY = "city"
         const val KEY_THEME_MODE = "theme_mode"
         const val KEY_SEED_COLOR = "seed_color"
+
+        val REMOVED_SEEDS = setOf(0xFFC62828.toInt(), 0xFFC2185B.toInt())
         const val KEY_HIGH_CONTRAST = "high_contrast"
         const val KEY_REFRESH_MINUTES = "refresh_minutes"
         const val KEY_LANGUAGE = "language"

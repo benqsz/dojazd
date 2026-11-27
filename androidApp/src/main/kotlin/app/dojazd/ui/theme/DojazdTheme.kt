@@ -32,16 +32,15 @@ class SeedColorChoice(
 /**
  * Seed colours offered in settings: a few hues spread around the colour wheel so
  * the resulting themes are clearly different, plus black for a monochrome theme.
+ * Red and pink are not among them: red is the colour of live data, whatever the theme.
  */
 val SeedColorChoices =
     listOf(
         SeedColorChoice(Color(0xFF1565C0), R.string.color_blue),
         SeedColorChoice(Color(0xFF2E7D32), R.string.color_green),
         SeedColorChoice(Color(0xFFEF6C00), R.string.color_orange),
-        SeedColorChoice(Color(0xFFC62828), R.string.color_red),
         SeedColorChoice(Color(0xFF7B1FA2), R.string.color_purple),
         SeedColorChoice(Color(0xFF00796B), R.string.color_teal),
-        SeedColorChoice(Color(0xFFC2185B), R.string.color_pink),
         SeedColorChoice(Color(0xFFF9A825), R.string.color_yellow),
         SeedColorChoice(Color(0xFF5D4037), R.string.color_brown),
         SeedColorChoice(Color(0xFF455A64), R.string.color_slate),

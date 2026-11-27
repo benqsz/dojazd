@@ -26,6 +26,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -41,6 +42,7 @@ import app.dojazd.data.ServiceAlert
 import app.dojazd.data.TimetableRepository
 import app.dojazd.provider.CityConfig
 import app.dojazd.ui.theme.IconSize
+import app.dojazd.ui.theme.LocalDarkTheme
 import app.dojazd.ui.theme.Spacing
 
 /** The language the app shows its texts in, for picking translations of live data. */
@@ -171,9 +173,15 @@ fun LiveIcon(modifier: Modifier = Modifier) {
     )
 }
 
-/** The colour of times that come from live data rather than the timetable. */
+/**
+ * The colour of times that come from live data rather than the timetable: always
+ * red, whatever the theme's accent, so that it is never taken for the colour of a line.
+ */
 @Composable
-fun liveColor() = MaterialTheme.colorScheme.tertiary
+fun liveColor() = if (LocalDarkTheme.current) LIVE_ON_DARK else LIVE_ON_LIGHT
+
+private val LIVE_ON_LIGHT = Color(0xFFC62828)
+private val LIVE_ON_DARK = Color(0xFFFF8A80)
 
 @Composable
 internal fun LiveRow(content: @Composable () -> Unit) {

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -73,9 +74,10 @@ internal fun ColumnScope.AppearanceSettings(settings: AppSettings) {
     // Without system colours the default seed is what "no choice" looks like.
     val selectedSeed = theme.seedColor ?: if (supportsSystemColors) null else DefaultSeedColor.toArgb()
     FlowRow(
-        modifier = Modifier.padding(horizontal = Spacing.large),
-        horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.large),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.medium, Alignment.CenterHorizontally),
         verticalArrangement = Arrangement.spacedBy(Spacing.medium),
+        maxItemsInEachRow = SWATCHES_IN_ROW,
     ) {
         if (supportsSystemColors) {
             ColorSwatch(
@@ -167,3 +169,5 @@ private val SYSTEM_SWATCH_COLORS =
         Color(0xFF8E24AA),
         Color(0xFFE53935),
     )
+
+private const val SWATCHES_IN_ROW = 5

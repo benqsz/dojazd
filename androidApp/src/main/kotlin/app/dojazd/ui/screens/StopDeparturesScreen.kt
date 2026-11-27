@@ -222,12 +222,7 @@ private fun DepartureRow(
                     GtfsTime.format(item.time),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color =
-                        when {
-                            !item.runs -> faded
-                            delay != null -> liveColor()
-                            else -> Color.Unspecified
-                        },
+                    color = if (item.runs) Color.Unspecified else faded,
                     textDecoration = if (item.runs) null else TextDecoration.LineThrough,
                 )
                 val minutes = (item.time - now.secondsOfDay) / 60
