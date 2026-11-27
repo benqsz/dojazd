@@ -1,8 +1,12 @@
 package app.dojazd.ui.screens
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,6 +15,10 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.clearText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -40,6 +48,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -59,6 +70,7 @@ import app.dojazd.model.GeoPoint
 import app.dojazd.provider.CityConfig
 import app.dojazd.storage.Place
 import app.dojazd.ui.PlanPoint
+import app.dojazd.ui.ROUTE_END_ICON
 import app.dojazd.ui.RouteText
 import app.dojazd.ui.Screen
 import app.dojazd.ui.SectionHeader
@@ -148,17 +160,52 @@ fun PlannerTab(
         }
     }
 
-    Column(
-        modifier =
-            Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(Spacing.large),
-        verticalArrangement = Arrangement.spacedBy(Spacing.medium),
-    ) {
-        Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
-            PointField(stringResource(R.string.planner_from), from, onClick = { picking = Picking.FROM })
-            PointField(stringResource(R.string.planner_to), to, onClick = { picking = Picking.TO }) {
+    // The search for an end of the journey is typed into its own field of the form, and what it finds
+    // takes the place of the rest of the form under the two fields. Keyed, so that choosing the
+    // destination right after the start begins with an empty search.
+    val picker = key(picking) { rememberPlacePickerState() }
+    // Its own, so that finding the position for the search and for a recent journey do not show as each other's.
+    val searchLocator = rememberLocator(city)
+    BackHandler(enabled = picking != null) {
+        // While adding a favourite, going back returns to the search, not out of it.
+        if (picker.addingFavourite) picker.addingFavourite = false else picking = null
+    }
+    val fromLabel = stringResource(R.string.planner_from)
+    val toLabel = stringResource(R.string.planner_to)
+    val addLabel = stringResource(R.string.place_add)
+
+    /** The search typed into the field of [which] end, while that is the one being chosen. */
+    fun searchOf(which: Picking): PointSearch? =
+        if (picking != which) {
+            null
+        } else {
+            PointSearch(
+                text = picker.text,
+                locating = searchLocator.locating,
+                onLocate = { searchLocator.locate { picker.located = it } },
+                onClose = { picking = null },
+            )
+        }
+
+    Column(Modifier.fillMaxSize()) {
+        Column(Modifier.padding(Spacing.large), verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
+            val placeholder = stringResource(if (city.addresses != null) R.string.search_places else R.string.search_stops)
+            PointField(
+                icon = R.drawable.ic_trip_origin,
+                label = if (picking == Picking.FROM && picker.addingFavourite) addLabel else fromLabel,
+                point = from,
+                placeholder = placeholder,
+                search = searchOf(Picking.FROM),
+                onClick = { picking = Picking.FROM },
+            )
+            PointField(
+                icon = R.drawable.ic_location_on,
+                label = if (picking == Picking.TO && picker.addingFavourite) addLabel else toLabel,
+                point = to,
+                placeholder = placeholder,
+                search = searchOf(Picking.TO),
+                onClick = { picking = Picking.TO },
+            ) {
                 IconButton(
                     onClick = {
                         val previousFrom = from
@@ -170,67 +217,85 @@ fun PlannerTab(
                     Icon(painterResource(R.drawable.ic_swap_vert), contentDescription = stringResource(R.string.planner_swap))
                 }
             }
+            if (picking != null && searchLocator.locating) {
+                Text(
+                    stringResource(R.string.locating),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else {
+                (if (picking != null) searchLocator.problem else locator.problem)?.let { problem ->
+                    Text(problem, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
+                }
+            }
         }
 
-        DepartureChip(
-            label = if (day > 0) "${dayLabel(date, day)} ${GtfsTime.format(seconds)}" else null,
-            day = day,
-            seconds = seconds,
-            timezone = city.timezone,
-            onClick = { choosingTime = true },
-        )
-
-        val start = from
-        val destination = to
-        Button(
-            onClick = { if (start != null && destination != null) search(start, destination) },
-            enabled = start != null && destination != null && start != destination,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text(stringResource(R.string.planner_search))
-        }
-
-        locator.problem?.let { problem ->
-            Text(problem, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
-        }
-
-        if (recent.isNotEmpty()) {
-            RecentJourneys(
-                journeys = recent,
-                saved = saved,
-                myLocation = myLocation,
-                locatingFor = locatingFor.takeIf { locator.locating },
-                onClick = { if (!locator.locating) searchAgain(it) },
-            )
-        }
-    }
-
-    picking?.let { which ->
-        // Keyed, so that choosing the destination right after the start begins with an empty search.
-        key(which) {
-            PlacePickerDialog(
-                title = stringResource(if (which == Picking.FROM) R.string.planner_from else R.string.planner_to),
-                city = city,
-                timetables = repository,
-                cityData = cityData,
-                places = places,
-                recentPlaces = recentPlaces,
-                onPick = { point ->
-                    if (which == Picking.FROM) {
-                        from = point
-                        // The destination is what comes next, so its search opens straight away.
-                        picking = if (to == null) Picking.TO else null
-                    } else {
-                        to = point
+        val which = picking
+        if (which != null) {
+            // Keyed like the search itself, so that a map or a dialog open for one end does not stay up for the other.
+            key(which) {
+                PlacePickerResults(
+                    state = picker,
+                    title = if (which == Picking.FROM) fromLabel else toLabel,
+                    city = city,
+                    timetables = repository,
+                    cityData = cityData,
+                    places = places,
+                    recentPlaces = recentPlaces,
+                    onPick = { point ->
+                        if (which == Picking.FROM) {
+                            from = point
+                            // The destination is what comes next, so its search opens straight away.
+                            picking = if (to == null) Picking.TO else null
+                        } else {
+                            to = point
+                            picking = null
+                        }
+                    },
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                    onEditPlaces = {
                         picking = null
-                    }
-                },
-                onDismiss = { picking = null },
-                onEditPlaces = {
-                    picking = null
-                    onOpen(Screen.Settings(SettingsSection.PLACES))
-                },
-            )
+                        onOpen(Screen.Settings(SettingsSection.PLACES))
+                    },
+                )
+            }
+        } else {
+            Column(
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState())
+                        .padding(start = Spacing.large, end = Spacing.large, bottom = Spacing.large),
+                verticalArrangement = Arrangement.spacedBy(Spacing.medium),
+            ) {
+                DepartureChip(
+                    label = if (day > 0) "${dayLabel(date, day)} ${GtfsTime.format(seconds)}" else null,
+                    day = day,
+                    seconds = seconds,
+                    timezone = city.timezone,
+                    onClick = { choosingTime = true },
+                )
+
+                val start = from
+                val destination = to
+                Button(
+                    onClick = { if (start != null && destination != null) search(start, destination) },
+                    enabled = start != null && destination != null && start != destination,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(stringResource(R.string.planner_search))
+                }
+
+                if (recent.isNotEmpty()) {
+                    RecentJourneys(
+                        journeys = recent,
+                        saved = saved,
+                        myLocation = myLocation,
+                        locatingFor = locatingFor.takeIf { locator.locating },
+                        onClick = { if (!locator.locating) searchAgain(it) },
+                    )
+                }
+            }
         }
     }
 
@@ -391,20 +456,128 @@ private fun PlanPoint.toRecent(): RecentPlace =
 /** The user's location is named in the current language, not the one it was remembered in. */
 private fun RecentPlace.shownName(myLocation: String) = if (kind == RecentPlace.Kind.LOCATION) myLocation else name
 
-/** One end of the journey: "From" or "To" alone until chosen, then the small label over the place's name. */
+/** The search typed into a field of the form while its end of the journey is being chosen. */
+private class PointSearch(
+    val text: TextFieldState,
+    val locating: Boolean,
+    val onLocate: () -> Unit,
+    val onClose: () -> Unit,
+)
+
+/**
+ * One end of the journey: "From" or "To" alone until chosen, then the small label over the place's name.
+ * While it is being chosen, with a [search], the field grows a little and is typed into; what the
+ * search finds is listed under the form.
+ */
 @Composable
 private fun PointField(
+    /** Which end of the journey this is: the circle of the start or the pin of the destination. */
+    icon: Int,
     label: String,
     point: PlanPoint?,
+    placeholder: String,
+    search: PointSearch?,
     onClick: () -> Unit,
-    /** Drawn inside the field at its end, such as a button; null for nothing. */
+    /** Drawn inside the field at its end while it is not being typed into, such as a button; null for nothing. */
     content: (@Composable () -> Unit)? = null,
 ) {
-    OutlinedCard(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            PointFieldText(label, point, Modifier.weight(1f))
-            content?.invoke()
+    val height by animateDpAsState(if (search != null) FIELD_HEIGHT_SEARCHING else FIELD_HEIGHT, label = "field")
+    val row: @Composable () -> Unit = {
+        Row(Modifier.heightIn(min = height), verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                painterResource(icon),
+                contentDescription = null,
+                modifier = Modifier.padding(start = Spacing.large).size(ROUTE_END_ICON),
+                tint = MaterialTheme.colorScheme.primary,
+            )
+            if (search == null) {
+                PointFieldText(label, point, Modifier.weight(1f))
+                content?.invoke()
+            } else {
+                PointSearchText(label, placeholder, search, Modifier.weight(1f))
+                when {
+                    search.text.text.isNotEmpty() -> {
+                        IconButton(onClick = { search.text.clearText() }) {
+                            Icon(painterResource(R.drawable.ic_clear), contentDescription = stringResource(R.string.clear))
+                        }
+                    }
+
+                    search.locating -> {
+                        Box(Modifier.size(ControlSize.touchTarget), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(Modifier.size(IconSize.medium), strokeWidth = 2.dp)
+                        }
+                    }
+
+                    else -> {
+                        IconButton(onClick = search.onLocate) {
+                            Icon(
+                                painterResource(R.drawable.ic_my_location),
+                                contentDescription = stringResource(R.string.my_location),
+                                tint = MaterialTheme.colorScheme.primary,
+                            )
+                        }
+                    }
+                }
+                IconButton(onClick = search.onClose) {
+                    Icon(painterResource(R.drawable.ic_close), contentDescription = stringResource(R.string.close))
+                }
+            }
         }
+    }
+    if (search == null) {
+        OutlinedCard(onClick = onClick, modifier = Modifier.fillMaxWidth()) { row() }
+    } else {
+        // Not a button while typed into, and outlined in the accent so that it is plain which end is being chosen.
+        OutlinedCard(
+            modifier = Modifier.fillMaxWidth(),
+            border = BorderStroke(SEARCHING_BORDER, MaterialTheme.colorScheme.primary),
+        ) { row() }
+    }
+}
+
+/** The label of a field over the search typed into it; the keyboard comes up as soon as it shows. */
+@Composable
+private fun PointSearchText(
+    label: String,
+    placeholder: String,
+    search: PointSearch,
+    modifier: Modifier = Modifier,
+) {
+    val focus = remember { FocusRequester() }
+    LaunchedEffect(Unit) { focus.requestFocus() }
+    Column(
+        modifier =
+            modifier.padding(
+                start = Spacing.medium,
+                end = Spacing.extraSmall,
+                top = Spacing.extraSmall,
+                bottom = Spacing.extraSmall,
+            ),
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+        val text = search.text
+        BasicTextField(
+            state = text,
+            modifier = Modifier.fillMaxWidth().focusRequester(focus),
+            textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
+            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+            lineLimits = TextFieldLineLimits.SingleLine,
+            decorator = { field ->
+                Box {
+                    if (text.text.isEmpty()) {
+                        Text(
+                            placeholder,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                    field()
+                }
+            },
+        )
     }
 }
 
@@ -415,10 +588,7 @@ private fun PointFieldText(
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier =
-            modifier
-                .heightIn(min = FIELD_HEIGHT)
-                .padding(horizontal = Spacing.large, vertical = Spacing.extraSmall),
+        modifier = modifier.padding(start = Spacing.medium, end = Spacing.large, top = Spacing.extraSmall, bottom = Spacing.extraSmall),
         verticalArrangement = Arrangement.Center,
     ) {
         if (point == null) {
@@ -437,6 +607,10 @@ private fun PointFieldText(
 
 /** Fits the label and the name, so a field keeps its height once a place is chosen. */
 private val FIELD_HEIGHT = ControlSize.touchTarget
+
+private val FIELD_HEIGHT_SEARCHING = 64.dp
+
+private val SEARCHING_BORDER = 2.dp
 
 /** The swap button inside the lower field. */
 private val SWAP_BUTTON = ControlSize.touchTarget

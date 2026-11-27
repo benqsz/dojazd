@@ -17,6 +17,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
@@ -30,12 +32,14 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -87,12 +91,44 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * Full-screen search for one end of a journey. One list holds everything that
- * matches, told apart by icon: the user's saved places, stops, addresses and
- * named places. Before anything is typed it holds the user's own location and
- * the saved places, and below a line those chosen recently. The last entry
- * picks a point on the map instead.
+ * What a search for a place holds while it is open: what has been typed, and
+ * whether what is chosen becomes a favourite place instead of being handed back.
+ * The field the search is typed into and the list of what it finds share it,
+ * wherever on the screen each of them stands.
  */
+@Stable
+class PlacePickerState(
+    query: String = "",
+    addingFavourite: Boolean = false,
+) {
+    /** What is typed, held as the field it is typed into needs it, so that field and search never disagree. */
+    val text = TextFieldState(query)
+
+    var query: String
+        get() = text.text.toString()
+        set(value) {
+            if (value != query) text.setTextAndPlaceCursorAtEnd(value)
+        }
+
+    /** While true, what is chosen becomes a favourite place instead of an end of the journey. */
+    var addingFavourite by mutableStateOf(addingFavourite)
+
+    /** The user's position, found from the search field and not yet taken up by the list. */
+    var located by mutableStateOf<GeoPoint?>(null)
+
+    companion object {
+        val Saver =
+            listSaver<PlacePickerState, Any>(
+                save = { listOf(it.query, it.addingFavourite) },
+                restore = { PlacePickerState(it[0] as String, it[1] as Boolean) },
+            )
+    }
+}
+
+@Composable
+fun rememberPlacePickerState(): PlacePickerState = rememberSaveable(saver = PlacePickerState.Saver) { PlacePickerState() }
+
+/** The search for one end of a journey over the whole screen: the field it is typed into, and under it what it finds. */
 @Composable
 fun PlacePickerDialog(
     title: String,
@@ -106,11 +142,51 @@ fun PlacePickerDialog(
     /** Opens where saved places are managed; null to offer no way there. */
     onEditPlaces: (() -> Unit)? = null,
 ) {
-    var query by rememberSaveable { mutableStateOf("") }
+    val state = rememberPlacePickerState()
+    val locator = rememberLocator(city)
+    FullScreenDialog(
+        title = { Text(if (state.addingFavourite) stringResource(R.string.place_add) else title) },
+        onDismiss = onDismiss,
+        // While adding a favourite, closing goes back to the search, not out of it.
+        onClose = { if (state.addingFavourite) state.addingFavourite = false else onDismiss() },
+    ) {
+        PlaceSearchField(
+            query = state.query,
+            onQueryChange = { state.query = it },
+            placeholder = stringResource(if (city.addresses != null) R.string.search_places else R.string.search_stops),
+            locator = locator,
+            onLocate = { state.located = it },
+        )
+        PlacePickerResults(state, title, city, timetables, cityData, places, recentPlaces, onPick, Modifier.fillMaxSize(), onEditPlaces)
+    }
+}
+
+/**
+ * What a search for one end of a journey finds, for what is typed into [state].
+ * One list holds everything that matches, told apart by icon: the user's saved
+ * places, stops, addresses and named places. Before anything is typed it holds
+ * the saved places, and below a line those chosen recently. The last entry
+ * picks a point on the map instead.
+ */
+@Composable
+fun PlacePickerResults(
+    state: PlacePickerState,
+    /** What is being searched for, as the title of the map a point is picked on. */
+    title: String,
+    city: CityConfig,
+    timetables: TimetableRepository,
+    cityData: CityDataRepository,
+    places: PlacesRepository,
+    recentPlaces: RecentPlacesRepository,
+    onPick: (PlanPoint) -> Unit,
+    modifier: Modifier = Modifier,
+    /** Opens where saved places are managed; null to offer no way there. */
+    onEditPlaces: (() -> Unit)? = null,
+) {
+    var query by state::query
     val key = SearchText.fold(query.trim())
 
-    // While true, what is chosen becomes a favourite place instead of an end of the journey.
-    var addingFavourite by rememberSaveable { mutableStateOf(false) }
+    var addingFavourite by state::addingFavourite
     var saving by remember { mutableStateOf<Place?>(null) }
 
     /** Saves the chosen point as a new favourite place, after asking for its label and icon. */
@@ -175,8 +251,13 @@ fun PlacePickerDialog(
     }
     val map by produceState<OfflineMap?>(initialValue = null, city.id) { value = cityData.map(city) }
 
-    val locator = rememberLocator(city)
     val myLocation = stringResource(R.string.my_location)
+    // Where the user happens to be is not a place to offer again later, so it is not remembered.
+    LaunchedEffect(state.located) {
+        val point = state.located ?: return@LaunchedEffect
+        state.located = null
+        choose(PlanPoint(myLocation, point.lat, point.lon, myLocation = true))
+    }
 
     val context = LocalContext.current
     val savedMessage = stringResource(R.string.place_saved)
@@ -208,102 +289,86 @@ fun PlacePickerDialog(
         )
     }
 
-    FullScreenDialog(
-        title = { Text(if (addingFavourite) stringResource(R.string.place_add) else title) },
-        onDismiss = onDismiss,
-        // While adding a favourite, closing goes back to the search, not out of it.
-        onClose = { if (addingFavourite) addingFavourite = false else onDismiss() },
-    ) {
-        PlaceSearchField(
-            query = query,
-            onQueryChange = { query = it },
-            placeholder = stringResource(if (city.addresses != null) R.string.search_places else R.string.search_stops),
-            locator = locator,
-            // Where the user happens to be is not a place to offer again later, so it is not remembered.
-            onLocate = { point -> choose(PlanPoint(myLocation, point.lat, point.lon, myLocation = true)) },
-        )
-
-        val foundStops = matchingStops
-        if (foundStops == null) {
-            LoadingBox()
-            return@FullScreenDialog
+    val foundStops = matchingStops
+    if (foundStops == null) {
+        LoadingBox(modifier)
+        return
+    }
+    // Kept clear of the keyboard, so that the end of the list can be reached while it is up.
+    LazyColumn(modifier.imePadding()) {
+        // While searching, the way to edit saved places would only be in the way.
+        val onEdit = onEditPlaces.takeIf { key.isEmpty() }
+        // With no favourite places yet, adding the first one is offered in their place.
+        val onAdd: (() -> Unit)? =
+            if (key.isEmpty() && !addingFavourite && saved.none { it.location in city.bounds }) {
+                {
+                    addingFavourite = true
+                    query = ""
+                }
+            } else {
+                null
+            }
+        if (addingFavourite) {
+            item(key = "adding-hint") {
+                Text(
+                    stringResource(R.string.place_add_hint),
+                    modifier = Modifier.padding(horizontal = Spacing.large, vertical = Spacing.small),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        } else if (onAdd != null || matchingSaved.isNotEmpty() || onEdit != null) {
+            item(key = "saved-header") { SectionHeader(stringResource(R.string.section_saved_places), Modifier.sectionHeaderPadding()) }
         }
-        // Kept clear of the keyboard, so that the end of the list can be reached while it is up.
-        LazyColumn(Modifier.fillMaxSize().imePadding()) {
-            // While searching, the way to edit saved places would only be in the way.
-            val onEdit = onEditPlaces.takeIf { key.isEmpty() }
-            // With no favourite places yet, adding the first one is offered in their place.
-            val onAdd: (() -> Unit)? =
-                if (key.isEmpty() && !addingFavourite && saved.none { it.location in city.bounds }) {
-                    {
-                        addingFavourite = true
-                        query = ""
-                    }
-                } else {
-                    null
-                }
-            if (addingFavourite) {
-                item(key = "adding-hint") {
-                    Text(
-                        stringResource(R.string.place_add_hint),
-                        modifier = Modifier.padding(horizontal = Spacing.large, vertical = Spacing.small),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            } else if (onAdd != null || matchingSaved.isNotEmpty() || onEdit != null) {
-                item(key = "saved-header") { SectionHeader(stringResource(R.string.section_saved_places), Modifier.sectionHeaderPadding()) }
-            }
-            if (onAdd != null) {
-                item(key = "add-place") { AddPlaceTile(onAdd) }
-            } else if (!addingFavourite && (matchingSaved.isNotEmpty() || onEdit != null)) {
-                item(key = "saved") {
-                    // A saved place is always at hand; it does not need to be remembered as recent.
-                    SavedPlacesGrid(matchingSaved, onEdit) { place ->
-                        onPick(PlanPoint(place.name, place.location.lat, place.location.lon))
-                    }
+        if (onAdd != null) {
+            item(key = "add-place") { AddPlaceTile(onAdd) }
+        } else if (!addingFavourite && (matchingSaved.isNotEmpty() || onEdit != null)) {
+            item(key = "saved") {
+                // A saved place is always at hand; it does not need to be remembered as recent.
+                SavedPlacesGrid(matchingSaved, onEdit) { place ->
+                    onPick(PlanPoint(place.name, place.location.lat, place.location.lon))
                 }
             }
-            // Saved places are always there; what was chosen lately changes, so it stands apart.
-            if (shownRecent.isNotEmpty()) {
-                item(key = "recent-header") { SectionHeader(stringResource(R.string.places_recent), Modifier.sectionHeaderPadding()) }
+        }
+        // Saved places are always there; what was chosen lately changes, so it stands apart.
+        if (shownRecent.isNotEmpty()) {
+            item(key = "recent-header") { SectionHeader(stringResource(R.string.places_recent), Modifier.sectionHeaderPadding()) }
+        }
+        recentPlaces(shownRecent, stops, ::pick)
+        if (foundStops.isNotEmpty()) {
+            item(key = "stops-header") { SectionHeader(stringResource(R.string.places_stops), Modifier.sectionHeaderPadding()) }
+        }
+        stopResults(
+            foundStops,
+            onPick = { pick(it, RecentPlace.Kind.STOP) },
+            // A stop has no address of its own; its name says where it is.
+            onSave = { saving = Place(places.newId(), it.name, address = it.name, location = it.center) },
+        )
+        if (found.isNotEmpty()) {
+            item(key = "addresses-header") { SectionHeader(stringResource(R.string.places_addresses), Modifier.sectionHeaderPadding()) }
+        }
+        addressResults(
+            found,
+            onPick = ::pick,
+            onSave = { saving = Place(places.newId(), it.name, address = it.address(), location = it.location) },
+        )
+        if (key.isNotEmpty() && matchingSaved.isEmpty() && foundStops.isEmpty() && found.isEmpty()) {
+            item(key = "nothing") {
+                Text(
+                    stringResource(if (city.addresses != null) R.string.no_places_found else R.string.no_stops_found),
+                    modifier = Modifier.padding(Spacing.extraLarge),
+                    style = MaterialTheme.typography.bodyLarge,
+                )
             }
-            recentPlaces(shownRecent, stops, ::pick)
-            if (foundStops.isNotEmpty()) {
-                item(key = "stops-header") { SectionHeader(stringResource(R.string.places_stops), Modifier.sectionHeaderPadding()) }
-            }
-            stopResults(
-                foundStops,
-                onPick = { pick(it, RecentPlace.Kind.STOP) },
-                // A stop has no address of its own; its name says where it is.
-                onSave = { saving = Place(places.newId(), it.name, address = it.name, location = it.center) },
-            )
-            if (found.isNotEmpty()) {
-                item(key = "addresses-header") { SectionHeader(stringResource(R.string.places_addresses), Modifier.sectionHeaderPadding()) }
-            }
-            addressResults(
-                found,
-                onPick = ::pick,
-                onSave = { saving = Place(places.newId(), it.name, address = it.address(), location = it.location) },
-            )
-            if (key.isNotEmpty() && matchingSaved.isEmpty() && foundStops.isEmpty() && found.isEmpty()) {
-                item(key = "nothing") {
-                    Text(
-                        stringResource(if (city.addresses != null) R.string.no_places_found else R.string.no_stops_found),
-                        modifier = Modifier.padding(Spacing.extraLarge),
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
-                }
-            }
-            if (map != null) {
-                item(key = "map") {
-                    HorizontalDivider()
-                    ListItem(
-                        modifier = Modifier.clickable { pickingOnMap = true },
-                        leadingContent = { Icon(painterResource(R.drawable.ic_map), contentDescription = null) },
-                    ) {
-                        Text(stringResource(R.string.pick_on_map))
-                    }
+        }
+        if (map != null) {
+            item(key = "map") {
+                HorizontalDivider()
+                ListItem(
+                    modifier = Modifier.clickable { pickingOnMap = true },
+                    leadingContent = { Icon(painterResource(R.drawable.ic_map), contentDescription = null) },
+                ) {
+                    Text(stringResource(R.string.pick_on_map))
                 }
             }
         }

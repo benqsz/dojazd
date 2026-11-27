@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -118,7 +119,8 @@ fun HomeScreen(
             }
         },
     ) { padding ->
-        Box(Modifier.padding(padding)) {
+        // Taken off what is left for the content, so that room made for the keyboard does not count the bars twice.
+        Box(Modifier.padding(padding).consumeWindowInsets(padding)) {
             when (tab) {
                 0 -> PlannerTab(city, repository, planner, cityData, places, recentPlaces, recentJourneys, onOpen)
                 else -> LinesTab(repository, onOpen)
