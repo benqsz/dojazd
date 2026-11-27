@@ -4,8 +4,8 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
-// A release build is given its version as -PappVersionName=1.2.3.
-val appVersionName = providers.gradleProperty("appVersionName").getOrElse("0.0.1")
+// A release build is given its version as -PappVersionName=1.2.3; without it, a build takes the version being worked on.
+val appVersionName = providers.gradleProperty("appVersionName").getOrElse("0.2.0")
 
 // 1.2.3 -> 10203. Must only ever grow, or Android refuses the update.
 fun versionCodeOf(versionName: String): Int {
